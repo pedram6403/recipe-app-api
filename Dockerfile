@@ -1,4 +1,4 @@
-FROM python:alpine3.17
+FROM python:3.11-alpine
 MAINTAINER Pedram P
 
 ENV PYTHONUNBUFFERED 1

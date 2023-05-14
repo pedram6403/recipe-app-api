@@ -20,3 +20,4 @@ class AdminUser(BasUserAdmin):
         }),
     )
 admin.site.register(models.User, AdminUser)
+admin.site.register(models.Tag)

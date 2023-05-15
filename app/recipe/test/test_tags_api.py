@@ -24,6 +24,8 @@ class PublicTagApiTests(TestCase):
         res = self.client.get(TAG_URL)
 
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+
+        
 class PrivateTagApiTest(TestCase):
     "test the autherized user tag"
 

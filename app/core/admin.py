@@ -21,3 +21,5 @@ class AdminUser(BasUserAdmin):
     )
 admin.site.register(models.User, AdminUser)
 admin.site.register(models.Tag)
+admin.site.register(models.Ingredient)
+admin.site.register(models.Recipe)

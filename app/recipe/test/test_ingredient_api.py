@@ -36,9 +36,9 @@ class PrivateIngredientApiTest(TestCase):
         Ingredient.objects.create(user=self.user, name='cucomber')
         Ingredient.objects.create(user=self.user, name='udhh')
 
-        res = self.client.post(INGREDIENT_URL)
+        res = self.client.get(INGREDIENT_URL)
 
-        ingredients = Ingredient.objects.all()
+        ingredients = Ingredient.objects.all().order_by('-name')
         serializer = IngredientSerializer(ingredients, many=True)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
@@ -61,7 +61,7 @@ class PrivateIngredientApiTest(TestCase):
         payload = {
             'name':'cucomber'
         }
-        res= self.client.post(Ingredient, payload)
+        res= self.client.post(INGREDIENT_URL, payload)
         exists = Ingredient.objects.filter(user=self.user, name=payload['name']).exists()
 
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
@@ -72,6 +72,6 @@ class PrivateIngredientApiTest(TestCase):
         payload = {
             'name':''
         }
-        res= self.client.post(Ingredient, payload)
+        res= self.client.post(INGREDIENT_URL, payload)
 
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)

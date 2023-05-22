@@ -8,6 +8,7 @@ django = "*"
 djangorestframework = "*"
 psycopg2 = "*"
 flake8 = "*"
+pillow = "*"
 
 [dev-packages]
 

@@ -24,10 +24,10 @@ def detail_url(recipe_id):
     return reverse('recipe:recipe-detail', args=[recipe_id])
 
 def sample_tag(user, name='choclet'):
-    Tag.objects.create(user=user, name=name)
+    return Tag.objects.create(user=user, name=name)
 
 def sample_ingredient(user, name='test ingre'):
-    Ingredient.objects.create(user=user, name=name)
+    return Ingredient.objects.create(user=user, name=name)
 
 def sample_recipe(user, **params):
     """create and retuen a sample recipe"""
@@ -70,7 +70,7 @@ class privateRecipeApiTest(TestCase):
 
         res = self.client.get(RECIPE_URL)
 
-        recipes = Recipe.objects.all().order_by('-id')
+        recipes = Recipe.objects.all()
         serializer = RecipeSerializer(recipes, many=True)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
@@ -115,7 +115,7 @@ class privateRecipeApiTest(TestCase):
             'price': 5.0
         }
         res = self.client.post(RECIPE_URL, payload)
-        self.assertTupleEqual(res.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
 
         exists = Recipe.objects.filter(title=payload['title']).exists()
         self.assertTrue(exists)
@@ -133,12 +133,12 @@ class privateRecipeApiTest(TestCase):
         payload = {
             'title': 'Avacado Lim',
             'tags': [tag1.id, tag2.id],
-            'time_minutes': 20.00,
+            'time_minute': 20.00,
             'price': 5.00
         }
 
         res = self.client.post(RECIPE_URL, payload)
-        self.assertTupleEqual(res.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
 
         recipe= Recipe.objects.get(id = res.data['id'])
         tags = recipe.tags.all()
@@ -154,13 +154,13 @@ class privateRecipeApiTest(TestCase):
 
         payload = {
             'title': 'Avacado Lim',
-            'tags': [ingredient1.id, ingredient2.id],
-            'time_minutes': 10.00,
+            'ingredients': [ingredient1.id, ingredient2.id],
+            'time_minute': 10.00,
             'price': 5.00
         }
 
         res = self.client.post(RECIPE_URL, payload)
-        self.assertTupleEqual(res.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
 
         recipe= Recipe.objects.get(id = res.data['id'])
         ingredients = recipe.ingredients.all()
@@ -192,12 +192,12 @@ class privateRecipeApiTest(TestCase):
     def test_full_update_recipe(self):
         """test updating recipe with put"""
 
-        recipe=sample_recipe(user=self.user)
+        recipe = sample_recipe(user=self.user)
         recipe.tags.add(sample_tag(user=self.user))
 
         pay_load={
             'title':'spageti',
-            'time_miinute':15,
+            'time_minute':15,
             'price':5.00
         }
         url = detail_url(recipe.id)
@@ -205,8 +205,8 @@ class privateRecipeApiTest(TestCase):
 
         recipe.refresh_from_db()
         self.assertEqual(recipe.title, pay_load['title'])
-        self.assertEqual(recipe.title, pay_load['time_minute'])
-        self.assertEqual(recipe.title, pay_load['price'])
+        self.assertEqual(recipe.time_minute, pay_load['time_minute'])
+        self.assertEqual(recipe.price, pay_load['price'])
 
         tags = recipe.tags.all()
         self.assertEqual(len(tags),0)
@@ -217,14 +217,14 @@ class privateRecipeApiTest(TestCase):
         recipe2 = sample_recipe(user=self.user, title= 'food2')
 
         tag1 = sample_tag(user=self.user, name='vegan')
-        tag2 = sample_tag(user=self.user, title='vegeterian')
+        tag2 = sample_tag(user=self.user, name='vegeterian')
 
         recipe1.tags.add(tag1)
         recipe2.tags.add(tag2)
 
         recipe3 = sample_recipe(user=self.user, title='meet')
 
-        res = self.client(
+        res = self.client.get(
             RECIPE_URL, {'tags':f'{tag1.id},{tag2.id}'}
         )
 
@@ -233,7 +233,7 @@ class privateRecipeApiTest(TestCase):
         serializer3 = RecipeSerializer(recipe3)
 
         self.assertIn(serializer1.data, res.data)
-        self.assertIn(serializer2.data. res.data)
+        self.assertIn(serializer2.data, res.data)
         self.assertNotIn(serializer3.data, res.data)
     
     def test_filter_recipe_by_ingredient(self):
@@ -243,10 +243,11 @@ class privateRecipeApiTest(TestCase):
 
         ingredient1 = sample_ingredient(user=self.user, name='ing1')
         ingredient2 = sample_ingredient(user=self.user, name='ing2')
-
+        recipe1.ingredients.add(ingredient1)
+        recipe2.ingredients.add(ingredient2)
         recipe3 = sample_recipe(user=self.user, title='food3')
 
-        res = self.client(
+        res = self.client.get(
             RECIPE_URL,
             {'ingredients':f'{ingredient1.id},{ingredient2.id}'}
         )
@@ -256,7 +257,7 @@ class privateRecipeApiTest(TestCase):
         serializer3 = RecipeSerializer(recipe3)
 
         self.assertIn(serializer1.data, res.data)
-        self.assertIn(serializer2.data. res.data)
+        self.assertIn(serializer2.data, res.data)
         self.assertNotIn(serializer3.data, res.data)
         
 
@@ -264,12 +265,12 @@ class RecipeImageUploadTest(TestCase):
     """test uploading image to recipe"""
 
     def setUp(self):
-        self.client = APIClient
-        self.user = get_user_model(
+        self.client = APIClient()
+        self.user = get_user_model().objects.create_user(
            ' user@test.com',
            'testpass'
         )
-        self.client.force_authenticate(user=self.user)
+        self.client.force_authenticate(self.user)
         self.recipe = sample_recipe(user=self.user)
 
     def tearDown(self):
@@ -283,7 +284,7 @@ class RecipeImageUploadTest(TestCase):
             img = Image.new('RGB', (10,10))
             img.save(ntf, format='JPEG')
             ntf.seek(0)
-            res = self.client.post(url, {'image':ntf}, format= 'multupart')
+            res = self.client.post(url, {'image':ntf}, format= 'multipart')
         
         self.recipe.refresh_from_db()
         self.assertEqual(res.status_code, status.HTTP_200_OK)

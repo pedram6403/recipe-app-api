@@ -88,13 +88,13 @@ class PrivateTagApiTest(TestCase):
         recipe = Recipe.objects.create(
             user=self.user, 
             title='food1',
-            time_minutes=15,
+            time_minute=15,
             price=5.00
             )
         
         recipe.tags.add(tag1)
 
-        res = self.client(TAG_URL, {'assigned_only':1})
+        res = self.client.get(TAG_URL, {'assigned_only':1})
 
         serializer1=TagSerializer(tag1)
         serializer2=TagSerializer(tag2)

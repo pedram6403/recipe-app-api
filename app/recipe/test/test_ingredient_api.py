@@ -85,7 +85,7 @@ class PrivateIngredientApiTest(TestCase):
         recipe= Recipe.objects.create(
             user=self.user,
             title='food1',
-            time_minutes=5,
+            time_minute=5,
             price=5.0
         )
 
